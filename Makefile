@@ -23,6 +23,7 @@ OUTPUT_PATH=$(shell pwd)/output
 # ALL_SRC=$(DUT_SRC) $(TEST_SRC) $(SRC_PATH)/edge_detector.h
 SW_SRCS=$(SRC_PATH)/main.cpp $(SRC_PATH)/image_io.cpp $(SRC_PATH)/gaussian.cpp $(SRC_PATH)/sobel.cpp $(SRC_PATH)/nms.cpp $(SRC_PATH)/threshold.cpp $(SRC_PATH)/hysteresis.cpp
 HLS_SRCS=$(SRC_PATH)/dut.cpp
+DUT_TB_SRCS=$(SRC_PATH)/dut_tb.cpp $(SRC_PATH)/dut.cpp $(SRC_PATH)/image_io.cpp $(SRC_PATH)/gaussian.cpp $(SRC_PATH)/sobel.cpp $(SRC_PATH)/nms.cpp $(SRC_PATH)/threshold.cpp
 INCLUDES=$(wildcard include/*.hpp)
 # DATA_PATH=$(shell pwd)/data
 KRIA_DIR=$(shell pwd)/kria_dir
@@ -48,13 +49,15 @@ CSIM_ARGS   ?= --low 20 --high 60 --sigma 1.5
 
 TCL_NAME?=build_dut.tcl
 
-.PHONY: all edge_detector csim bitstream clean
+.PHONY: all edge_detector csim dut_csim bitstream clean
 
 all: bitstream deploy
 
 edge_detector: ${BUILD_PATH}/edge_detector
 
 csim: ${RESULTS_DIR}/edge_detector_csim.txt
+
+dut_csim: ${RESULTS_DIR}/dut_tb_csim.txt
 
 dut: ${HW_DUT_PATH}/dut.v
 
@@ -76,6 +79,15 @@ clean:
 ${BUILD_PATH}/edge_detector: ${SW_SRCS}
 	mkdir -p ${BUILD_PATH}
 	g++ ${CFLAGS} $^ -o $@ -lrt
+
+${BUILD_PATH}/dut_tb: ${DUT_TB_SRCS} ${INCLUDES}
+	mkdir -p ${BUILD_PATH}
+	g++ ${CFLAGS} -I${VHLS_INC} -DHLS_NO_XIL_FPO_LIB -DINPUT_DIR=\"${INPUT_PATH}\" ${DUT_TB_SRCS} -o $@
+
+${RESULTS_DIR}/dut_tb_csim.txt: ${BUILD_PATH}/dut_tb
+	@echo "Running HLS DUT functional test (dut_tb)..."
+	@mkdir -p ${RESULTS_DIR}
+	$< 2>&1 | tee $@
 
 ${RESULTS_DIR}/edge_detector_csim.txt: ${BUILD_PATH}/edge_detector
 # 	@echo "Running edge_detector sim..."
