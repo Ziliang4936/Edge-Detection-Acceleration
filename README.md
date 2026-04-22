@@ -169,3 +169,4 @@ This will emit:
 
 - No OpenCV or external image-processing libraries are used.
 - The implementation is split into explicit pipeline stages for inspection and future acceleration work.
+- For full reproducible testing steps on local/lab/Kira, see `TESTING_GUIDE.md`.
