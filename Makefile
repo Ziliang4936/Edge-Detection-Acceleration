@@ -49,7 +49,7 @@ CSIM_ARGS   ?= --low 20 --high 60 --sigma 1.5
 
 TCL_NAME?=build_dut.tcl
 
-.PHONY: all edge_detector csim dut_csim bitstream clean
+.PHONY: all edge_detector csim dut_csim bitstream bitstream_packed clean
 
 all: bitstream deploy
 
@@ -62,6 +62,14 @@ dut_csim: ${RESULTS_DIR}/dut_tb_csim.txt
 dut: ${HW_DUT_PATH}/dut.v
 
 bitstream: ${BUILD_PATH}/bitstream.bit
+
+# Build a bitstream that uses src/dut_packed.cpp instead of src/dut.cpp.
+# Keeps the baseline bitstream on disk so you can A/B compare Experiment 1.
+bitstream_packed:
+	$(MAKE) bitstream \
+		HLS_SRCS=$(SRC_PATH)/dut_packed.cpp \
+		DUT_SRC_NAME=dut_packed.cpp \
+		BUILD_PATH=$(ROOT_DIR)/build_packed
 
 deploy: ${BUILD_PATH}/bitstream.bit
 	mkdir -p ${KRIA_DIR}
@@ -103,10 +111,10 @@ ${RESULTS_DIR}/edge_detector_csim.txt: ${BUILD_PATH}/edge_detector
 
 ${HW_DUT_PATH}/dut.v: ${HLS_SRCS} ${INCLUDES}
 	@echo "================================================================="
-	@echo "Synthesizing edge_detector with $(TCL_NAME)..."
+	@echo "Synthesizing edge_detector with $(TCL_NAME) (DUT=$(notdir ${HLS_SRCS}))..."
 	@echo "================================================================="
 	mkdir -p ${HW_DUT_PATH}
-	SRC_PATH=${SRC_PATH} INPUT_PATH=${INPUT_PATH} PROJ_PATH=${ROOT_DIR} INCLUDE_PATH=${INCLUDE_PATH} SKIP_CSIM=1 SKIP_COSIM=1 $(XIL_HLS) artifacts/${TCL_NAME}
+	SRC_PATH=${SRC_PATH} INPUT_PATH=${INPUT_PATH} PROJ_PATH=${ROOT_DIR} INCLUDE_PATH=${INCLUDE_PATH} DUT_SRC_NAME=$(notdir ${HLS_SRCS}) SKIP_CSIM=1 SKIP_COSIM=1 $(XIL_HLS) artifacts/${TCL_NAME}
 	rm -f ${HW_DUT_PATH}/*
 	cp edge_detector.prj/solution1/impl/ip/hdl/verilog/* ${HW_DUT_PATH}/
 

@@ -3,3 +3,22 @@
 *.png
 *.pgm
 *.jpg
+
+# local-only handoff doc: contains SSH credentials, do NOT commit
+work_pgs.md
+
+# build / tool artifacts
+build/
+build_packed/
+logs/
+result/
+edge_detector.prj/
+kria.prj/
+kria_dir/
+vivado*.jou
+vivado*.log
+vivado_*.backup.*
+*.bak
+*.new
+*.dataflow
+

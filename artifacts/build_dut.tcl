@@ -36,10 +36,17 @@ if {[info exists ::env(SKIP_COSIM)]} {
 set cflags "-std=c++14 -I$include_path"
 set tb_cflags [concat $cflags [format {-DINPUT_DIR=\\"%s\\"} $input_path]]
 
+# Allow switching which DUT source file is synthesized (e.g. dut.cpp vs
+# dut_packed.cpp for the 4-pixel/word packing experiment).
+set dut_src_name "dut.cpp"
+if {[info exists ::env(DUT_SRC_NAME)]} {
+    set dut_src_name $::env(DUT_SRC_NAME)
+}
+
 open_project -reset "$proj_path/edge_detector.prj"
 set_top dut
 
-add_files -cflags $cflags $src_path/dut.cpp
+add_files -cflags $cflags $src_path/$dut_src_name
 add_files -cflags $tb_cflags -tb $src_path/dut_tb.cpp
 add_files -cflags $cflags -tb $src_path/image_io.cpp
 add_files -cflags $cflags -tb $src_path/gaussian.cpp
